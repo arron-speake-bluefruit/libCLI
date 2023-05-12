@@ -8,7 +8,7 @@
 typedef void (*CliCommandFunction)(void*);
 
 // Type of a function called when the CLI needs to write a string back to the user.
-typedef void (*CliWritebackFunction)(const char*);
+typedef void (*CliWritebackFunction)(const char*, void*);
 
 // A command registered by the CLI. All fields are private and must not be modified manually.
 typedef struct CliCommand {
@@ -23,6 +23,7 @@ typedef struct CliHeader {
     size_t count;
     CliCommand* commands;
     CliWritebackFunction writeback;
+    void* writeback_data;
 } CliHeader;
 
 // The result of a `libcli_run` call.
@@ -45,6 +46,9 @@ typedef struct CliNewInfo {
 
     // The function used to write strings back to the user.
     CliWritebackFunction writeback;
+
+    // Additional data passed to `writeback` calls. 
+    void* writeback_data;
 } CliNewInfo;
 
 // Initialize a new `CliHeader` with the given command buffer and capacity.

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+// Mocks & utility
+
 static size_t first_command_call_count = 0;
 static size_t second_command_call_count = 0;
 static size_t third_command_call_count = 0;
@@ -35,7 +37,8 @@ static void fourth_command(void* userdata) {
 static size_t writeback_size = 0;
 static char writeback_buffer[512] = {0};
 
-static void write_to_buffer(const char* string) {
+static void write_to_buffer(const char* string, void* userdata) {
+    (void)userdata;
     size_t length = strlen(string);
 
     assert((length + writeback_size) < (sizeof(writeback_buffer) - 1));
@@ -50,15 +53,24 @@ static void clear_writeback_buffer(void) {
     memset(writeback_buffer, 0x00, sizeof(writeback_buffer));
 }
 
-static void printf_writeback(const char* string) {
+static void printf_writeback(const char* string, void* userdata) {
+    (void)userdata;
     printf("%s", string);
 }
+
+static void* writeback_userdata_pointer = NULL;
+static void writeback_userdata(const char* string, void* userdata) {
+    (void)string;
+    writeback_userdata_pointer = userdata;
+}
+
+// Tests
 
 static void can_init_and_register_single_command(void) {
     // Given
     enum { capacity = 32 };
     CliCommand commands[capacity];
-    CliNewInfo info = { commands, capacity, printf_writeback };
+    CliNewInfo info = { commands, capacity, printf_writeback, NULL };
     CliHeader header = libcli_new(&info);
 
     bool added = libcli_add(&header, "first", first_command);
@@ -81,7 +93,7 @@ static void can_register_multiple_commands(void) {
     // Given
     enum { capacity = 5 };
     CliCommand commands[capacity];
-    CliNewInfo info = { commands, capacity, printf_writeback };
+    CliNewInfo info = { commands, capacity, printf_writeback, NULL };
     CliHeader header = libcli_new(&info);
 
     bool added_all_commands = libcli_add(&header, "first", first_command)
@@ -121,7 +133,7 @@ static void cant_exceed_capacity(void) {
     // Given
     enum { capacity = 2 };
     CliCommand commands[capacity];
-    CliNewInfo info = { commands, capacity, printf_writeback };
+    CliNewInfo info = { commands, capacity, printf_writeback, NULL };
     CliHeader header = libcli_new(&info);
 
     bool added = libcli_add(&header, "first", first_command);
@@ -144,7 +156,7 @@ static void automatic_help_command(void) {
     // Given
     enum { capacity = 4 };
     CliCommand commands[capacity];
-    CliNewInfo info = { commands, capacity, write_to_buffer };
+    CliNewInfo info = { commands, capacity, write_to_buffer, NULL };
     CliHeader header = libcli_new(&info);
 
     // When, Then
@@ -182,6 +194,24 @@ static void automatic_help_command(void) {
     assert(strcmp(expected, writeback_buffer) == 0);
 }
 
+static void writeback_data_is_passed_to_writeback(void) {
+    // Given
+    int userdata = 987654321;
+
+    enum { capacity = 1 };
+    CliCommand commands[capacity];
+    CliNewInfo info = { commands, capacity, writeback_userdata, &userdata };
+    CliHeader header = libcli_new(&info);
+
+    // When
+    libcli_run(&header, "help", NULL);
+
+    // Then
+    assert(writeback_userdata_pointer == &userdata);
+}
+
+// Test runner
+
 static void cleanup(void) {
     first_command_call_count = 0;
     second_command_call_count = 0;
@@ -191,6 +221,7 @@ static void cleanup(void) {
     second_command_last_userdata = NULL;
     third_command_last_userdata = NULL;
     fourth_command_last_userdata = NULL;
+    writeback_userdata_pointer = NULL;
     clear_writeback_buffer();
 }
 
@@ -202,6 +233,7 @@ int main(void) {
         can_register_multiple_commands,
         cant_exceed_capacity,
         automatic_help_command,
+        writeback_data_is_passed_to_writeback,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);

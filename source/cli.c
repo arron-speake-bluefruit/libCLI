@@ -13,16 +13,20 @@ static void dummy_help_command(void* userdata) {
     // Unused. If the help command is selected, a help function is executed instead of this.
 }
 
+static void writeback(const CliHeader* header, const char* string) {
+    header->writeback(string, header->writeback_data);
+}
+
 static void run_help_command(const CliHeader* header) {
-    header->writeback("list of commands:");
+    writeback(header, "list of commands:");
 
     for (size_t i = 0; i < header->count; i++) {
         CliCommand command = header->commands[i];
-        header->writeback("\n    ");
-        header->writeback(command.name);
+        writeback(header, "\n    ");
+        writeback(header, command.name);
     }
 
-    header->writeback("\n");
+    writeback(header, "\n");
 }
 
 // Perform a binary search for a command called `name`.
@@ -79,6 +83,7 @@ CliHeader libcli_new(const CliNewInfo* info) {
         .count = 0,
         .commands = info->commands,
         .writeback = info->writeback,
+        .writeback_data = info->writeback_data,
     };
 
     libcli_add(&header, "help", dummy_help_command);
