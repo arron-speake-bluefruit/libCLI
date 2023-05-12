@@ -58,7 +58,9 @@ CliHeader libcli_new(const CliNewInfo* info);
 // added. Returns false if the command was not added (if the command buffer is full).
 bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function);
 
-// Parse and execute `input` using the given CLI (`header`).
-CliRunResult libcli_run(const CliHeader* header, const char* input, void* userdata);
+// Parse and execute `input` using the given CLI (`header`). This parses in-place and destroys the
+// original string pointed to by `input`. Do _not_ pass immutable data or re-use `input` after this
+// call.
+CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata);
 
 #endif // LIBCLI_CLI_H

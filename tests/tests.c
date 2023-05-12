@@ -86,13 +86,15 @@ static void can_init_and_register_single_command(void) {
 
     // When, Then
     int data = 3;
-    CliRunResult result = libcli_run(&header, "first", &data);
+    char first[] = "first";
+    CliRunResult result = libcli_run(&header, first, &data);
     assert(result == cli_run_result_ok);
     assert(first_command_call_count == 1);
     assert(first_command_last_userdata == (void*)&data);
 
     // When, Then
-    result = libcli_run(&header, "wszhe3bbs32", NULL);
+    char wszhe3bbs32[] = "wszhe3bbs32";
+    result = libcli_run(&header, wszhe3bbs32, NULL);
     assert(result == cli_run_result_unknown);
     assert(first_command_call_count == 1);
 }
@@ -113,25 +115,29 @@ static void can_register_multiple_commands(void) {
     int userdata = 12354;
 
     // When, Then
-    CliRunResult result = libcli_run(&header, "first", &userdata);
+    char first[] = "first";
+    CliRunResult result = libcli_run(&header, first, &userdata);
     assert(result == cli_run_result_ok);
     assert(first_command_call_count == 1);
     assert(first_command_last_userdata == &userdata);
 
     // When, Then
-    result = libcli_run(&header, "second", &userdata);
+    char second[] = "second";
+    result = libcli_run(&header, second, &userdata);
     assert(result == cli_run_result_ok);
     assert(second_command_call_count == 1);
     assert(second_command_last_userdata == &userdata);
 
     // When, Then
-    result = libcli_run(&header, "third", NULL);
+    char third[] = "third";
+    result = libcli_run(&header, third, NULL);
     assert(result == cli_run_result_ok);
     assert(third_command_call_count == 1);
     assert(third_command_last_userdata == NULL);
 
     // When, Then
-    libcli_run(&header, "fourth", NULL);
+    char fourth[] = "fourth";
+    libcli_run(&header, fourth, NULL);
     assert(result == cli_run_result_ok);
     assert(fourth_command_call_count == 1);
     assert(fourth_command_last_userdata == NULL);
@@ -150,12 +156,14 @@ static void cant_exceed_capacity(void) {
     assert(!added);
 
     // When, Then
-    CliRunResult result = libcli_run(&header, "first", NULL);
+    char first[] = "first";
+    CliRunResult result = libcli_run(&header, first, NULL);
     assert(result == cli_run_result_ok);
     assert(first_command_call_count == 1);
 
     // When, Then
-    result = libcli_run(&header, "second", NULL);
+    char second[] = "second";
+    result = libcli_run(&header, second, NULL);
     assert(result == cli_run_result_unknown);
     assert(second_command_call_count == 0);
 }
@@ -168,7 +176,8 @@ static void automatic_help_command(void) {
     CliHeader header = libcli_new(&info);
 
     // When, Then
-    CliRunResult result = libcli_run(&header, "help", NULL);
+    char help[] = "help";
+    CliRunResult result = libcli_run(&header, help, NULL);
     assert(result == cli_run_result_ok);
     const char* expected = "list of commands:\n"
         "    help\n";
@@ -179,7 +188,8 @@ static void automatic_help_command(void) {
     libcli_add(&header, "build", first_command);
 
     // When, Then
-    result = libcli_run(&header, "help", NULL);
+    char help2[] = "help";
+    result = libcli_run(&header, help2, NULL);
     assert(result == cli_run_result_ok);
     expected = "list of commands:\n"
         "    build\n"
@@ -192,7 +202,8 @@ static void automatic_help_command(void) {
     libcli_add(&header, "zzzzzz", third_command);
 
     // When, Then
-    result = libcli_run(&header, "help", NULL);
+    char help3[] = "help";
+    result = libcli_run(&header, help3, NULL);
     assert(result == cli_run_result_ok);
     expected = "list of commands:\n"
         "    aaaa\n"
@@ -212,10 +223,45 @@ static void writeback_data_is_passed_to_writeback(void) {
     CliHeader header = libcli_new(&info);
 
     // When
-    libcli_run(&header, "help", NULL);
+    char help[] = "help";
+    libcli_run(&header, help, NULL);
 
     // Then
     assert(writeback_userdata_pointer == &userdata);
+}
+
+enum { test_max_argc = 16 };
+static size_t command_last_argc;
+static const char* command_last_argv[test_max_argc];
+
+static void command_remember_args(size_t argc, const char* const* argv, void* userdata) {
+    (void)userdata;
+
+    command_last_argc = argc;
+    assert(argc < test_max_argc);
+    memcpy(command_last_argv, argv, sizeof(const char*) * argc);
+}
+
+static void can_parse_space_separated_arguments(void) {
+    // Given
+    enum { capacity = 2 };
+    CliCommand commands[capacity];
+    CliNewInfo info = { commands, capacity, printf_writeback, NULL };
+    CliHeader header = libcli_new(&info);
+
+    // And
+    libcli_add(&header, "example", command_remember_args);
+
+    // When
+    char input[] = "     example a bc defg hijklmnop      ";
+    libcli_run(&header, input, NULL);
+
+    // Then
+    assert(command_last_argc == 4);
+    assert(strcmp(command_last_argv[0], "a") == 0);
+    assert(strcmp(command_last_argv[1], "bc") == 0);
+    assert(strcmp(command_last_argv[2], "defg") == 0);
+    assert(strcmp(command_last_argv[3], "hijklmnop") == 0);
 }
 
 // Test runner
@@ -231,6 +277,7 @@ static void cleanup(void) {
     fourth_command_last_userdata = NULL;
     writeback_userdata_pointer = NULL;
     clear_writeback_buffer();
+    command_last_argc = 0;
 }
 
 int main(void) {
@@ -242,6 +289,7 @@ int main(void) {
         cant_exceed_capacity,
         automatic_help_command,
         writeback_data_is_passed_to_writeback,
+        can_parse_space_separated_arguments,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);
