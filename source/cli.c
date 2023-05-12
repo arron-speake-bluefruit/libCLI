@@ -38,7 +38,7 @@ static void run_help_command(const CliHeader* header) {
 }
 
 // Perform a binary search for a command called `name`.
-static SearchResult search(const CliHeader* header, const char* name) {
+static SearchResult find_command_by_name(const CliHeader* header, const char* name) {
     size_t size = header->count;
     size_t left = 0;
     size_t right = size;
@@ -64,7 +64,7 @@ static SearchResult search(const CliHeader* header, const char* name) {
 }
 
 static bool add_command(CliHeader* header, const char* name, CliCommandFunction function) {
-    SearchResult result = search(header, name);
+    SearchResult result = find_command_by_name(header, name);
 
     if (result.found) {
         return false;
@@ -135,27 +135,51 @@ static size_t parse_input(char* input, const char** arguments) {
     return argument_count;
 }
 
+static CliRunResult run_command(
+    const CliHeader* header,
+    CliCommand command,
+    size_t argc,
+    const char* const* argv,
+    void* userdata
+) {
+    if (command.function == dummy_help_command) {
+        run_help_command(header);
+        return cli_run_result_ok;
+    } else {
+        command.function(argc, argv, userdata);
+        return cli_run_result_ok;
+    }
+}
+
+static CliRunResult run_arguments(
+    const CliHeader* header,
+    const char* command_name,
+    size_t argc,
+    const char* const* argv,
+    void* userdata
+) {
+    SearchResult result = find_command_by_name(header, command_name);
+
+    if (result.found) {
+        CliCommand command = header->commands[result.index];
+
+        return run_command(header, command, argc, argv, userdata);
+    } else {
+        return cli_run_result_unknown;
+    }
+}
+
 CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata) {
     const char* arguments[input_parser_argument_capacity];
     size_t argument_count = parse_input(input, arguments);
 
-    if (argument_count == 0) {
+    if (argument_count > 0) {
+        const char* command_name = arguments[0];
+        size_t argc = argument_count - 1;
+        const char* const* argv = &arguments[1];
+
+        return run_arguments(header, command_name, argc, argv, userdata);
+    } else {
         return cli_run_result_ok;
     }
-
-    SearchResult result = search(header, arguments[0]);
-
-    if (!result.found) {
-        return cli_run_result_unknown;
-    }
-
-    CliCommand command = header->commands[result.index];
-
-    if (command.function == dummy_help_command) {
-        run_help_command(header);
-        return cli_run_result_ok;
-    }
-
-    command.function(argument_count - 1, &arguments[1], userdata);
-    return cli_run_result_ok;
 }
