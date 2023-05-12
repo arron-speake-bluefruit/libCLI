@@ -2,6 +2,7 @@
 #define LIBCLI_CLI_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef void (*CliCommandFunction)(void);
 
@@ -18,7 +19,7 @@ typedef struct CliHeader {
 
 CliHeader libcli_new(size_t commands_size, CliCommand* commands);
 
-void libcli_add(CliHeader* header, const char* name, CliCommandFunction function);
+bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function);
 
 void libcli_run(const CliHeader* header, const char* input);
 

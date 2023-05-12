@@ -29,7 +29,8 @@ static void can_init_and_register_single_command(void) {
     CliCommand commands[capacity];
     CliHeader header = libcli_new(capacity, commands);
 
-    libcli_add(&header, "first", first_command);
+    bool added = libcli_add(&header, "first", first_command);
+    assert(added);
 
     // When, Then
     libcli_run(&header, "first");
@@ -46,10 +47,14 @@ static void can_register_multiple_commands(void) {
     CliCommand commands[capacity];
     CliHeader header = libcli_new(capacity, commands);
 
-    libcli_add(&header, "first", first_command);
-    libcli_add(&header, "second", second_command);
-    libcli_add(&header, "third", third_command);
-    libcli_add(&header, "fourth", fourth_command);
+    bool added = libcli_add(&header, "first", first_command);
+    assert(added);
+    added = libcli_add(&header, "second", second_command);
+    assert(added);
+    added = libcli_add(&header, "third", third_command);
+    assert(added);
+    added = libcli_add(&header, "fourth", fourth_command);
+    assert(added);
 
     // When, Then
     libcli_run(&header, "first");
@@ -68,6 +73,26 @@ static void can_register_multiple_commands(void) {
     assert(fourth_command_call_count == 1);
 }
 
+static void cant_exceed_capacity(void) {
+    // Given
+    enum { capacity = 1 };
+    CliCommand commands[capacity];
+    CliHeader header = libcli_new(capacity, commands);
+
+    bool added = libcli_add(&header, "first", first_command);
+    assert(added);
+    added = libcli_add(&header, "second", second_command);
+    assert(!added);
+
+    // When, Then
+    libcli_run(&header, "first");
+    assert(first_command_call_count == 1);
+
+    // When, Then
+    libcli_run(&header, "second");
+    assert(second_command_call_count == 0);
+}
+
 static void cleanup(void) {
     first_command_call_count = 0;
     second_command_call_count = 0;
@@ -81,6 +106,7 @@ int main() {
     const Test tests[] = {
         can_init_and_register_single_command,
         can_register_multiple_commands,
+        cant_exceed_capacity,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);

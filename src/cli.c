@@ -3,6 +3,9 @@
 #include <string.h>
 
 static const CliCommand* find_command(const CliHeader* header, const char* name) {
+    // TODO: This does a linear search, but could be optimized to do binary.
+    // (by making `libcli_add` insert commands in-order)
+
     for (size_t i = 0; i < header->count; i++) {
         const CliCommand* command = &header->commands[i];
 
@@ -22,15 +25,20 @@ CliHeader libcli_new(size_t commands_size, CliCommand* commands) {
     };
 }
 
-void libcli_add(CliHeader* header, const char* name, CliCommandFunction function) {
+bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function) {
     CliCommand command = {
         .name = name,
         .function = function,
     };
 
-    size_t index = header->count;
-    header->count += 1;
-    header->commands[index] = command;
+    if (header->count < header->capacity) {
+        size_t index = header->count;
+        header->count += 1;
+        header->commands[index] = command;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void libcli_run(const CliHeader* header, const char* input) {
