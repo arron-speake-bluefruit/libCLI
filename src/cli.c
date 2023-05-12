@@ -1,20 +1,37 @@
 #include "cli.h"
 
+#include <stdio.h>
 #include <string.h>
 
-static const CliCommand* find_command(const CliHeader* header, const char* name) {
-    // TODO: This does a linear search, but could be optimized to do binary.
-    // (by making `libcli_add` insert commands in-order)
+typedef struct {
+    bool found;
+    size_t index;
+} SearchResult;
 
-    for (size_t i = 0; i < header->count; i++) {
-        const CliCommand* command = &header->commands[i];
+// Perform a binary search for a command called `name`.
+static SearchResult search(const CliHeader* header, const char* name) {
+    size_t size = header->count;
+    size_t left = 0;
+    size_t right = size;
 
-        if (strcmp(name, command->name) == 0) {
-            return command;
+    while (left < right) {
+        size_t mid = left + size / 2;
+
+        const CliCommand* command = &header->commands[mid];
+        int cmp = strcmp(name, command->name);
+
+        if (cmp < 0) {
+            left = mid + 1;
+        } else if (cmp > 0) {
+            right = mid;
+        } else { // cmp == 0
+            return (SearchResult){ true, mid };
         }
+
+        size = right - left;
     }
 
-    return NULL;
+    return (SearchResult) { false, left };
 }
 
 CliHeader libcli_new(size_t commands_size, CliCommand* commands) {
@@ -26,25 +43,36 @@ CliHeader libcli_new(size_t commands_size, CliCommand* commands) {
 }
 
 bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function) {
-    CliCommand command = {
-        .name = name,
-        .function = function,
-    };
-
-    if (header->count < header->capacity) {
-        size_t index = header->count;
-        header->count += 1;
-        header->commands[index] = command;
-        return true;
-    } else {
+    if (header->count >= header->capacity) {
         return false;
+    } else {
+        SearchResult result = search(header, name);
+
+        if (result.found) {
+            return false;
+        } else {
+            CliCommand command = {
+                .name = name,
+                .function = function,
+            };
+
+            size_t index = result.index;
+            size_t move_size = (header->capacity - index - 1) * sizeof(CliCommand);
+            memmove(&header->commands[index + 1], &header->commands[index], move_size);
+
+            header->count += 1;
+            header->commands[index] = command;
+
+            return true;
+        }
     }
 }
 
 void libcli_run(const CliHeader* header, const char* input) {
-    const CliCommand* command = find_command(header, input);
+    SearchResult result = search(header, input);
 
-    if (command != NULL) {
-        command->function();
+    if (result.found) {
+        CliCommand command = header->commands[result.index];
+        command.function();
     }
 }
