@@ -4,13 +4,13 @@ project(CLI VERSION 0.1.0 LANGUAGES C)
 option(UNIT_TESTS "Enable the compilation of unit tests" Off)
 
 set(SOURCES
-	"src/cli.c"
+	"source/cli.c"
 )
 
 set(ADDITIONAL_CFLAGS "-Wall" "-Wextra" "-Wpedantic")
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/inc")
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_compile_options(${PROJECT_NAME} PRIVATE ${ADDITIONAL_CFLAGS})
 
 if(${UNIT_TESTS})
