@@ -97,7 +97,7 @@ static void cleanup(void) {
     fourth_command_call_count = 0;
 }
 
-int main() {
+int main(void) {
     typedef void (*Test)(void);
 
     const Test tests[] = {
