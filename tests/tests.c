@@ -47,14 +47,11 @@ static void can_register_multiple_commands(void) {
     CliCommand commands[capacity];
     CliHeader header = libcli_new(capacity, commands);
 
-    bool added = libcli_add(&header, "first", first_command);
-    assert(added);
-    added = libcli_add(&header, "second", second_command);
-    assert(added);
-    added = libcli_add(&header, "third", third_command);
-    assert(added);
-    added = libcli_add(&header, "fourth", fourth_command);
-    assert(added);
+    bool added_all_commands = libcli_add(&header, "first", first_command)
+        && libcli_add(&header, "second", second_command)
+        && libcli_add(&header, "third", third_command)
+        && libcli_add(&header, "fourth", fourth_command);
+    assert(added_all_commands);
 
     // When, Then
     libcli_run(&header, "first");
