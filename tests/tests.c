@@ -81,7 +81,7 @@ static void can_init_and_register_single_command(void) {
     CliNewInfo info = { commands, capacity, printf_writeback, NULL };
     CliHeader header = libcli_new(&info);
 
-    bool added = libcli_add(&header, "first", first_command);
+    bool added = libcli_add(&header, "first", "", first_command);
     assert(added);
 
     // When, Then
@@ -106,10 +106,10 @@ static void can_register_multiple_commands(void) {
     CliNewInfo info = { commands, capacity, printf_writeback, NULL };
     CliHeader header = libcli_new(&info);
 
-    bool added_all_commands = libcli_add(&header, "first", first_command)
-        && libcli_add(&header, "second", second_command)
-        && libcli_add(&header, "third", third_command)
-        && libcli_add(&header, "fourth", fourth_command);
+    bool added_all_commands = libcli_add(&header, "first", "", first_command)
+        && libcli_add(&header, "second", "", second_command)
+        && libcli_add(&header, "third", "", third_command)
+        && libcli_add(&header, "fourth", "", fourth_command);
     assert(added_all_commands);
 
     int userdata = 12354;
@@ -150,9 +150,9 @@ static void cant_exceed_capacity(void) {
     CliNewInfo info = { commands, capacity, printf_writeback, NULL };
     CliHeader header = libcli_new(&info);
 
-    bool added = libcli_add(&header, "first", first_command);
+    bool added = libcli_add(&header, "first", "", first_command);
     assert(added);
-    added = libcli_add(&header, "second", second_command);
+    added = libcli_add(&header, "second", "", second_command);
     assert(!added);
 
     // When, Then
@@ -180,36 +180,36 @@ static void automatic_help_command(void) {
     CliRunResult result = libcli_run(&header, help, NULL);
     assert(result == cli_run_result_ok);
     const char* expected = "list of commands:\n"
-        "    help\n";
+        "    help    displays information about commands\n";
     assert(strcmp(expected, writeback_buffer) == 0);
 
     // Given
     clear_writeback_buffer();
-    libcli_add(&header, "build", first_command);
+    libcli_add(&header, "build", "does something or whatever", first_command);
 
     // When, Then
     char help2[] = "help";
     result = libcli_run(&header, help2, NULL);
     assert(result == cli_run_result_ok);
     expected = "list of commands:\n"
-        "    build\n"
-        "    help\n";
+        "    build    does something or whatever\n"
+        "    help     displays information about commands\n";
     assert(strcmp(expected, writeback_buffer) == 0);
 
     // Given
     clear_writeback_buffer();
-    libcli_add(&header, "aaaa", second_command);
-    libcli_add(&header, "zzzzzz", third_command);
+    libcli_add(&header, "aaaa", "some stuff", second_command);
+    libcli_add(&header, "zzzzzz", "who knows what this command does", third_command);
 
     // When, Then
     char help3[] = "help";
     result = libcli_run(&header, help3, NULL);
     assert(result == cli_run_result_ok);
     expected = "list of commands:\n"
-        "    aaaa\n"
-        "    build\n"
-        "    help\n"
-        "    zzzzzz\n";
+        "    aaaa      some stuff\n"
+        "    build     does something or whatever\n"
+        "    help      displays information about commands\n"
+        "    zzzzzz    who knows what this command does\n";
     assert(strcmp(expected, writeback_buffer) == 0);
 }
 
@@ -250,7 +250,7 @@ static void can_parse_space_separated_arguments(void) {
     CliHeader header = libcli_new(&info);
 
     // And
-    libcli_add(&header, "example", command_remember_args);
+    libcli_add(&header, "example", "", command_remember_args);
 
     // When
     char input[] = "     example a bc defg hijklmnop      ";

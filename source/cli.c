@@ -30,8 +30,17 @@ static void run_help_command(const CliHeader* header) {
 
     for (size_t i = 0; i < header->count; i++) {
         CliCommand command = header->commands[i];
+
         writeback(header, "\n    ");
         writeback(header, command.name);
+
+        size_t name_length = strlen(command.name);
+        for (size_t j = name_length; j < header->longest_command_name_length; j++) {
+            writeback(header, " ");
+        }
+
+        writeback(header, "    ");
+        writeback(header, command.summary);
     }
 
     writeback(header, "\n");
@@ -63,7 +72,32 @@ static SearchResult find_command_by_name(const CliHeader* header, const char* na
     return (SearchResult) { false, left };
 }
 
-static bool add_command(CliHeader* header, const char* name, CliCommandFunction function) {
+static void update_longest_name_length(CliHeader* header, const char* name) {
+    size_t length = strlen(name);
+
+    if (length > header->longest_command_name_length) {
+        header->longest_command_name_length = length;
+    }
+}
+
+static void insert_command(
+    CliHeader* header,
+    size_t index,
+    CliCommand command
+) {
+    size_t move_size = (header->capacity - index - 1) * sizeof(CliCommand);
+    memmove(&header->commands[index + 1], &header->commands[index], move_size);
+
+    header->count += 1;
+    header->commands[index] = command;
+}
+
+static bool add_command(
+    CliHeader* header,
+    const char* name,
+    const char* summary,
+    CliCommandFunction function
+) {
     SearchResult result = find_command_by_name(header, name);
 
     if (result.found) {
@@ -71,15 +105,12 @@ static bool add_command(CliHeader* header, const char* name, CliCommandFunction 
     } else {
         CliCommand command = {
             .name = name,
+            .summary = summary,
             .function = function,
         };
+        insert_command(header, result.index, command);
 
-        size_t index = result.index;
-        size_t move_size = (header->capacity - index - 1) * sizeof(CliCommand);
-        memmove(&header->commands[index + 1], &header->commands[index], move_size);
-
-        header->count += 1;
-        header->commands[index] = command;
+        update_longest_name_length(header, name);
 
         return true;
     }
@@ -94,14 +125,19 @@ CliHeader libcli_new(const CliNewInfo* info) {
         .writeback_data = info->writeback_data,
     };
 
-    libcli_add(&header, "help", dummy_help_command);
+    libcli_add(&header, "help", "displays information about commands", dummy_help_command);
 
     return header;
 }
 
-bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function) {
+bool libcli_add(
+    CliHeader* header,
+    const char* name,
+    const char* summary,
+    CliCommandFunction function
+) {
     if (header->count < header->capacity) {
-        return add_command(header, name, function);
+        return add_command(header, name, summary, function);
     } else {
         return false;
     }

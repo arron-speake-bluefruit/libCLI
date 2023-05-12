@@ -13,6 +13,7 @@ typedef void (*CliWritebackFunction)(const char*, void*);
 // A command registered by the CLI. All fields are private and must not be modified manually.
 typedef struct CliCommand {
     const char* name;
+    const char* summary;
     CliCommandFunction function;
 } CliCommand;
 
@@ -24,6 +25,7 @@ typedef struct CliHeader {
     CliCommand* commands;
     CliWritebackFunction writeback;
     void* writeback_data;
+    size_t longest_command_name_length;
 } CliHeader;
 
 // The result of a `libcli_run` call.
@@ -56,7 +58,12 @@ CliHeader libcli_new(const CliNewInfo* info);
 
 // Add a new command `name` (calling `function`) to the header. Returns true if the command was
 // added. Returns false if the command was not added (if the command buffer is full).
-bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function);
+bool libcli_add(
+    CliHeader* header,
+    const char* name,
+    const char* summary,
+    CliCommandFunction function
+);
 
 // Parse and execute `input` using the given CLI (`header`). This parses in-place and destroys the
 // original string pointed to by `input`. Do _not_ pass immutable data or re-use `input` after this
