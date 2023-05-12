@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 // A function belonging to a command.
-typedef void (*CliCommandFunction)(void);
+typedef void (*CliCommandFunction)(void*);
 
 // A command registered by the CLI. All fields are private and must not be modified manually.
 typedef struct CliCommand {
@@ -29,6 +29,6 @@ CliHeader libcli_new(size_t commands_size, CliCommand* commands);
 bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function);
 
 // Parse and execute `input` using the given CLI (`header`).
-void libcli_run(const CliHeader* header, const char* input);
+void libcli_run(const CliHeader* header, const char* input, void* userdata);
 
 #endif // LIBCLI_CLI_H

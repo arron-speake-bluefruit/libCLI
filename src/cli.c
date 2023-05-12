@@ -68,11 +68,11 @@ bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function
     }
 }
 
-void libcli_run(const CliHeader* header, const char* input) {
+void libcli_run(const CliHeader* header, const char* input, void* userdata) {
     SearchResult result = search(header, input);
 
     if (result.found) {
         CliCommand command = header->commands[result.index];
-        command.function();
+        command.function(userdata);
     }
 }

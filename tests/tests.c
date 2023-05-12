@@ -6,21 +6,29 @@ static size_t first_command_call_count = 0;
 static size_t second_command_call_count = 0;
 static size_t third_command_call_count = 0;
 static size_t fourth_command_call_count = 0;
+static void* first_command_last_userdata = NULL;
+static void* second_command_last_userdata = NULL;
+static void* third_command_last_userdata = NULL;
+static void* fourth_command_last_userdata = NULL;
 
-static void first_command(void) {
+static void first_command(void* userdata) {
     first_command_call_count += 1;
+    first_command_last_userdata = userdata;
 }
 
-static void second_command(void) {
+static void second_command(void* userdata) {
     second_command_call_count += 1;
+    second_command_last_userdata = userdata;
 }
 
-static void third_command(void) {
+static void third_command(void* userdata) {
     third_command_call_count += 1;
+    third_command_last_userdata = userdata;
 }
 
-static void fourth_command(void) {
+static void fourth_command(void* userdata) {
     fourth_command_call_count += 1;
+    fourth_command_last_userdata = userdata;
 }
 
 static void can_init_and_register_single_command(void) {
@@ -33,11 +41,13 @@ static void can_init_and_register_single_command(void) {
     assert(added);
 
     // When, Then
-    libcli_run(&header, "first");
+    int data = 3;
+    libcli_run(&header, "first", &data);
     assert(first_command_call_count == 1);
+    assert(first_command_last_userdata == (void*)&data);
 
     // When, Then
-    libcli_run(&header, "wszhe3bbs32");
+    libcli_run(&header, "wszhe3bbs32", NULL);
     assert(first_command_call_count == 1);
 }
 
@@ -53,21 +63,27 @@ static void can_register_multiple_commands(void) {
         && libcli_add(&header, "fourth", fourth_command);
     assert(added_all_commands);
 
+    int userdata = 12354;
+
     // When, Then
-    libcli_run(&header, "first");
+    libcli_run(&header, "first", &userdata);
     assert(first_command_call_count == 1);
+    assert(first_command_last_userdata == &userdata);
 
     // When, Then
-    libcli_run(&header, "second");
+    libcli_run(&header, "second", &userdata);
     assert(second_command_call_count == 1);
+    assert(second_command_last_userdata == &userdata);
 
     // When, Then
-    libcli_run(&header, "third");
+    libcli_run(&header, "third", NULL);
     assert(third_command_call_count == 1);
+    assert(third_command_last_userdata == NULL);
 
     // When, Then
-    libcli_run(&header, "fourth");
+    libcli_run(&header, "fourth", NULL);
     assert(fourth_command_call_count == 1);
+    assert(fourth_command_last_userdata == NULL);
 }
 
 static void cant_exceed_capacity(void) {
@@ -82,11 +98,11 @@ static void cant_exceed_capacity(void) {
     assert(!added);
 
     // When, Then
-    libcli_run(&header, "first");
+    libcli_run(&header, "first", NULL);
     assert(first_command_call_count == 1);
 
     // When, Then
-    libcli_run(&header, "second");
+    libcli_run(&header, "second", NULL);
     assert(second_command_call_count == 0);
 }
 
@@ -95,6 +111,10 @@ static void cleanup(void) {
     second_command_call_count = 0;
     third_command_call_count = 0;
     fourth_command_call_count = 0;
+    first_command_last_userdata = NULL;
+    second_command_last_userdata = NULL;
+    third_command_last_userdata = NULL;
+    fourth_command_last_userdata = NULL;
 }
 
 int main(void) {
