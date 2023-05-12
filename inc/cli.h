@@ -21,6 +21,15 @@ typedef struct CliHeader {
     CliCommand* commands;
 } CliHeader;
 
+// The result of a `libcli_run` call.
+typedef enum CliRunResult {
+    // The input was parsed and a command was executed
+    cli_run_result_ok,
+
+    // The command name given in the input did not correspond to an existing command
+    cli_run_result_unknown,
+} CliRunResult;
+
 // Initialize a new `CliHeader` with the given command buffer and capacity.
 CliHeader libcli_new(size_t commands_size, CliCommand* commands);
 
@@ -29,6 +38,6 @@ CliHeader libcli_new(size_t commands_size, CliCommand* commands);
 bool libcli_add(CliHeader* header, const char* name, CliCommandFunction function);
 
 // Parse and execute `input` using the given CLI (`header`).
-void libcli_run(const CliHeader* header, const char* input, void* userdata);
+CliRunResult libcli_run(const CliHeader* header, const char* input, void* userdata);
 
 #endif // LIBCLI_CLI_H

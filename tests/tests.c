@@ -42,12 +42,14 @@ static void can_init_and_register_single_command(void) {
 
     // When, Then
     int data = 3;
-    libcli_run(&header, "first", &data);
+    CliRunResult result = libcli_run(&header, "first", &data);
+    assert(result == cli_run_result_ok);
     assert(first_command_call_count == 1);
     assert(first_command_last_userdata == (void*)&data);
 
     // When, Then
-    libcli_run(&header, "wszhe3bbs32", NULL);
+    result = libcli_run(&header, "wszhe3bbs32", NULL);
+    assert(result == cli_run_result_unknown);
     assert(first_command_call_count == 1);
 }
 
@@ -66,22 +68,26 @@ static void can_register_multiple_commands(void) {
     int userdata = 12354;
 
     // When, Then
-    libcli_run(&header, "first", &userdata);
+    CliRunResult result = libcli_run(&header, "first", &userdata);
+    assert(result == cli_run_result_ok);
     assert(first_command_call_count == 1);
     assert(first_command_last_userdata == &userdata);
 
     // When, Then
-    libcli_run(&header, "second", &userdata);
+    result = libcli_run(&header, "second", &userdata);
+    assert(result == cli_run_result_ok);
     assert(second_command_call_count == 1);
     assert(second_command_last_userdata == &userdata);
 
     // When, Then
-    libcli_run(&header, "third", NULL);
+    result = libcli_run(&header, "third", NULL);
+    assert(result == cli_run_result_ok);
     assert(third_command_call_count == 1);
     assert(third_command_last_userdata == NULL);
 
     // When, Then
     libcli_run(&header, "fourth", NULL);
+    assert(result == cli_run_result_ok);
     assert(fourth_command_call_count == 1);
     assert(fourth_command_last_userdata == NULL);
 }
@@ -98,11 +104,13 @@ static void cant_exceed_capacity(void) {
     assert(!added);
 
     // When, Then
-    libcli_run(&header, "first", NULL);
+    CliRunResult result = libcli_run(&header, "first", NULL);
+    assert(result == cli_run_result_ok);
     assert(first_command_call_count == 1);
 
     // When, Then
-    libcli_run(&header, "second", NULL);
+    result = libcli_run(&header, "second", NULL);
+    assert(result == cli_run_result_unknown);
     assert(second_command_call_count == 0);
 }
 
