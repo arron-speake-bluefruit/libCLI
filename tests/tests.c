@@ -1,6 +1,7 @@
+#include "cli.h"
 #include <assert.h>
 #include <stdio.h>
-#include "cli.h"
+#include <string.h>
 
 static size_t first_command_call_count = 0;
 static size_t second_command_call_count = 0;
@@ -31,11 +32,33 @@ static void fourth_command(void* userdata) {
     fourth_command_last_userdata = userdata;
 }
 
+static size_t writeback_size = 0;
+static char writeback_buffer[512] = {0};
+
+static void write_to_buffer(const char* string) {
+    size_t length = strlen(string);
+
+    assert((length + writeback_size) < (sizeof(writeback_buffer) - 1));
+
+    memcpy(&writeback_buffer[writeback_size], string, length);
+    writeback_size += length;
+    writeback_buffer[writeback_size] = '\0';
+}
+
+static void clear_writeback_buffer(void) {
+    writeback_size = 0;
+    memset(writeback_buffer, 0x00, sizeof(writeback_buffer));
+}
+
+static void printf_writeback(const char* string) {
+    printf("%s", string);
+}
+
 static void can_init_and_register_single_command(void) {
     // Given
     enum { capacity = 32 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands);
+    CliHeader header = libcli_new(capacity, commands, printf_writeback);
 
     bool added = libcli_add(&header, "first", first_command);
     assert(added);
@@ -55,9 +78,9 @@ static void can_init_and_register_single_command(void) {
 
 static void can_register_multiple_commands(void) {
     // Given
-    enum { capacity = 4 };
+    enum { capacity = 5 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands);
+    CliHeader header = libcli_new(capacity, commands, printf_writeback);
 
     bool added_all_commands = libcli_add(&header, "first", first_command)
         && libcli_add(&header, "second", second_command)
@@ -94,9 +117,9 @@ static void can_register_multiple_commands(void) {
 
 static void cant_exceed_capacity(void) {
     // Given
-    enum { capacity = 1 };
+    enum { capacity = 2 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands);
+    CliHeader header = libcli_new(capacity, commands, printf_writeback);
 
     bool added = libcli_add(&header, "first", first_command);
     assert(added);
@@ -114,6 +137,47 @@ static void cant_exceed_capacity(void) {
     assert(second_command_call_count == 0);
 }
 
+static void automatic_help_command(void) {
+    // Given
+    enum { capacity = 4 };
+    CliCommand commands[capacity];
+    CliHeader header = libcli_new(capacity, commands, write_to_buffer);
+
+    // When, Then
+    CliRunResult result = libcli_run(&header, "help", NULL);
+    assert(result == cli_run_result_ok);
+    const char* expected = "list of commands:\n"
+        "    help\n";
+    assert(strcmp(expected, writeback_buffer) == 0);
+
+    // Given
+    clear_writeback_buffer();
+    libcli_add(&header, "build", first_command);
+
+    // When, Then
+    result = libcli_run(&header, "help", NULL);
+    assert(result == cli_run_result_ok);
+    expected = "list of commands:\n"
+        "    build\n"
+        "    help\n";
+    assert(strcmp(expected, writeback_buffer) == 0);
+
+    // Given
+    clear_writeback_buffer();
+    libcli_add(&header, "aaaa", second_command);
+    libcli_add(&header, "zzzzzz", third_command);
+
+    // When, Then
+    result = libcli_run(&header, "help", NULL);
+    assert(result == cli_run_result_ok);
+    expected = "list of commands:\n"
+        "    aaaa\n"
+        "    build\n"
+        "    help\n"
+        "    zzzzzz\n";
+    assert(strcmp(expected, writeback_buffer) == 0);
+}
+
 static void cleanup(void) {
     first_command_call_count = 0;
     second_command_call_count = 0;
@@ -123,6 +187,7 @@ static void cleanup(void) {
     second_command_last_userdata = NULL;
     third_command_last_userdata = NULL;
     fourth_command_last_userdata = NULL;
+    clear_writeback_buffer();
 }
 
 int main(void) {
@@ -132,6 +197,7 @@ int main(void) {
         can_init_and_register_single_command,
         can_register_multiple_commands,
         cant_exceed_capacity,
+        automatic_help_command,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);
