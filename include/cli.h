@@ -34,8 +34,21 @@ typedef enum CliRunResult {
     cli_run_result_unknown,
 } CliRunResult;
 
+// Information required to create a new CLI. All field are public and must be written to before
+// calling `libcli_new`.
+typedef struct CliNewInfo {
+    // The buffer which CLI commands are stored.
+    CliCommand* commands;
+
+    // The maximum number of elements in `commands`.
+    size_t commands_size;
+
+    // The function used to write strings back to the user.
+    CliWritebackFunction writeback;
+} CliNewInfo;
+
 // Initialize a new `CliHeader` with the given command buffer and capacity.
-CliHeader libcli_new(size_t commands_size, CliCommand* commands, CliWritebackFunction writeback);
+CliHeader libcli_new(const CliNewInfo* info);
 
 // Add a new command `name` (calling `function`) to the header. Returns true if the command was
 // added. Returns false if the command was not added (if the command buffer is full).

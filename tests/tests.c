@@ -58,7 +58,8 @@ static void can_init_and_register_single_command(void) {
     // Given
     enum { capacity = 32 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands, printf_writeback);
+    CliNewInfo info = { commands, capacity, printf_writeback };
+    CliHeader header = libcli_new(&info);
 
     bool added = libcli_add(&header, "first", first_command);
     assert(added);
@@ -80,7 +81,8 @@ static void can_register_multiple_commands(void) {
     // Given
     enum { capacity = 5 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands, printf_writeback);
+    CliNewInfo info = { commands, capacity, printf_writeback };
+    CliHeader header = libcli_new(&info);
 
     bool added_all_commands = libcli_add(&header, "first", first_command)
         && libcli_add(&header, "second", second_command)
@@ -119,7 +121,8 @@ static void cant_exceed_capacity(void) {
     // Given
     enum { capacity = 2 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands, printf_writeback);
+    CliNewInfo info = { commands, capacity, printf_writeback };
+    CliHeader header = libcli_new(&info);
 
     bool added = libcli_add(&header, "first", first_command);
     assert(added);
@@ -141,7 +144,8 @@ static void automatic_help_command(void) {
     // Given
     enum { capacity = 4 };
     CliCommand commands[capacity];
-    CliHeader header = libcli_new(capacity, commands, write_to_buffer);
+    CliNewInfo info = { commands, capacity, write_to_buffer };
+    CliHeader header = libcli_new(&info);
 
     // When, Then
     CliRunResult result = libcli_run(&header, "help", NULL);

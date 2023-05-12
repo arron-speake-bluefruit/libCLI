@@ -73,12 +73,12 @@ static bool add_command(CliHeader* header, const char* name, CliCommandFunction 
     }
 }
 
-CliHeader libcli_new(size_t commands_size, CliCommand* commands, CliWritebackFunction writeback) {
+CliHeader libcli_new(const CliNewInfo* info) {
     CliHeader header = (CliHeader){
-        .capacity = commands_size,
+        .capacity = info->commands_size,
         .count = 0,
-        .commands = commands,
-        .writeback = writeback,
+        .commands = info->commands,
+        .writeback = info->writeback,
     };
 
     libcli_add(&header, "help", dummy_help_command);
