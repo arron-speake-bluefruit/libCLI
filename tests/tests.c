@@ -14,22 +14,30 @@ static void* second_command_last_userdata = NULL;
 static void* third_command_last_userdata = NULL;
 static void* fourth_command_last_userdata = NULL;
 
-static void first_command(void* userdata) {
+static void first_command(size_t argc, const char* const* argv, void* userdata) {
+    (void)argc;
+    (void)argv;
     first_command_call_count += 1;
     first_command_last_userdata = userdata;
 }
 
-static void second_command(void* userdata) {
+static void second_command(size_t argc, const char* const* argv, void* userdata) {
+    (void)argc;
+    (void)argv;
     second_command_call_count += 1;
     second_command_last_userdata = userdata;
 }
 
-static void third_command(void* userdata) {
+static void third_command(size_t argc, const char* const* argv, void* userdata) {
+    (void)argc;
+    (void)argv;
     third_command_call_count += 1;
     third_command_last_userdata = userdata;
 }
 
-static void fourth_command(void* userdata) {
+static void fourth_command(size_t argc, const char* const* argv, void* userdata) {
+    (void)argc;
+    (void)argv;
     fourth_command_call_count += 1;
     fourth_command_last_userdata = userdata;
 }

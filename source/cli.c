@@ -8,7 +8,9 @@ typedef struct {
     size_t index;
 } SearchResult;
 
-static void dummy_help_command(void* userdata) {
+static void dummy_help_command(size_t argc, const char* const* argv, void* userdata) {
+    (void)argc;
+    (void)argv;
     (void)userdata;
     // Unused. If the help command is selected, a help function is executed instead of this.
 }
@@ -110,7 +112,7 @@ CliRunResult libcli_run(const CliHeader* header, const char* input, void* userda
         if (command.function == dummy_help_command) {
             run_help_command(header);
         } else {
-            command.function(userdata);
+            command.function(0, NULL, userdata);
         }
 
         return cli_run_result_ok;

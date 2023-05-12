@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 // A function belonging to a command.
-typedef void (*CliCommandFunction)(void*);
+typedef void (*CliCommandFunction)(size_t, const char* const*, void*);
 
 // Type of a function called when the CLI needs to write a string back to the user.
 typedef void (*CliWritebackFunction)(const char*, void*);
