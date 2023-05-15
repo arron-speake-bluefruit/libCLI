@@ -3,16 +3,30 @@
 import subprocess
 
 EXAMPLES = {
-    "": "",
     "enable": "missing arg item for enable\n",
     "enable thing": "missing arg value for enable\n",
     "enable thing blah": "bad argument value for enable\n",
     "enable thing -10": "enabled thing with value -10\n",
     "disable": "missing arg item for disable\n",
-    "disable thing": "disabled thing\n",
-    "disable thing blah": "too many args for disable\n",
-    "disable-all": "disabled all items\n",
+    "disable  thing": "disabled thing\n",
+    "disable thing\t    blah": "too many args for disable\n",
+    "   disable-all ": "disabled all items\n",
     "enable-all": "enabled all items\n",
+
+    # command special cases
+    "": "",
+    "asfhgdjlsfdah": "command not found for asfhgdjlsfdah\n",
+
+    # test quote-escaped arguments
+    "disable \"\"": "disabled \n",
+    "disable ' 'thing\" \"wuh": "disabled  thing wuh\n",
+    "disable \"arg with spaces\"": "disabled arg with spaces\n",
+    "disable 's p a c e'": "disabled s p a c e\n",
+
+    # \-escapes
+    "\\disable \\\"": "disabled \"\n",
+    "disable \"quote: \\\"\"": "disabled quote: \"\n",
+    "disable two\\ words": "disabled two words\n",
 }
 
 success = True
@@ -25,11 +39,11 @@ for example_input in EXAMPLES:
     output_string = output_bytes.decode("utf-8")
     expected = EXAMPLES[example_input]
 
-    if output_string == expected:
-        print(f"`{example_input}` PASS")
-    else:
-        print(f"`{example_input}` FAIL: expected `{expected}` got `{output_string}`")
+    if output_string != expected:
+        print(f"FAIL `{example_input}`: expected `{expected}` got `{output_string}`")
         success = False
 
-if not success:
+if success:
+    print("all tests passed :)")
+else:
     exit(1)

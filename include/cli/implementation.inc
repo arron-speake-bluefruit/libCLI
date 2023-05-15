@@ -93,39 +93,12 @@ static bool parse_fail(const char* input, void* output) {
         return; \
     } \
 
-enum { input_parser_argument_capacity = 16 };
-
-static size_t parse_input(char* input, const char** arguments) {
-    const size_t input_length = strlen(input);
-
-    size_t argument_count = 0;
-    bool is_in_argument = false;
-
-    for (size_t i = 0; i < input_length; i++) {
-        char c = input[i];
-        bool is_space = isspace(c);
-        bool can_fit_more_args = (argument_count < input_parser_argument_capacity);
-
-        if (is_space && is_in_argument && can_fit_more_args) {
-            // end of an argument
-            input[i] = '\0';
-            is_in_argument = false;
-        } else if (!is_space && !is_in_argument) {
-            // starting new argument
-            arguments[argument_count] = &input[i];
-            argument_count += 1;
-            is_in_argument = true;
-        } else {
-            // nothing to do
-        }
-    }
-
-    return argument_count;
-}
+size_t libcli_parse(char* input, const char** arguments, size_t max_arguments);
 
 void libcli_run(char* input, void* userdata) {
-    const char* args[input_parser_argument_capacity];
-    size_t count = parse_input(input, args);
+    enum { capacity = 16 };
+    const char* args[capacity];
+    size_t count = libcli_parse(input, args, capacity);
 
     if (count == 0) {
         return;
