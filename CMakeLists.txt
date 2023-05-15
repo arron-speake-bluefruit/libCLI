@@ -1,24 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 project(CLI VERSION 0.1.0 LANGUAGES C)
 
-option(UNIT_TESTS "Enable the compilation of unit tests" Off)
+option(TESTING "Enable the compilation of unit tests" Off)
 
-set(SOURCES
-	"source/cli.c"
-)
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME} INTERFACE "${PROJECT_SOURCE_DIR}/include")
 
-set(ADDITIONAL_CFLAGS "-Wall" "-Wextra" "-Wpedantic")
+add_subdirectory(example)
 
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
-target_compile_options(${PROJECT_NAME} PRIVATE ${ADDITIONAL_CFLAGS})
-
-if(${UNIT_TESTS})
+if(${TESTING})
 	enable_testing()
 
-	add_executable(tests "tests/tests.c")
-	target_link_libraries(tests PRIVATE ${PROJECT_NAME})
-	target_compile_options(tests PRIVATE ${ADDITIONAL_CFLAGS})
-
-	add_test(NAME tests COMMAND tests)
+	add_test(NAME tests COMMAND python3 tests.py)
 endif()
