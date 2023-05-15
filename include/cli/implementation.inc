@@ -1,5 +1,5 @@
+#include "cli/internal/parse.h"
 #include <string.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -93,14 +93,14 @@ static bool parse_fail(const char* input, void* output) {
         return; \
     } \
 
-size_t libcli_parse(char* input, const char** arguments, size_t max_arguments);
-
 void libcli_run(char* input, void* userdata) {
     enum { capacity = 16 };
     const char* args[capacity];
-    size_t count = libcli_parse(input, args, capacity);
 
-    if (count == 0) {
+    ParseResult result = libcli_parse(input, args, capacity);
+    size_t count = result.argument_count;
+
+    if (!result.success || (count == 0)) {
         return;
     }
 

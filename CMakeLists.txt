@@ -4,7 +4,7 @@ project(CLI VERSION 0.1.0 LANGUAGES C)
 option(TESTING "Enable the compilation of unit tests" Off)
 
 set(sources
-	"source/cli_internal.c"
+	"source/parse.c"
 )
 
 add_library(${PROJECT_NAME} STATIC ${sources})
