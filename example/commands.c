@@ -1,47 +1,48 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void complex_command_1(char c) {
-    printf("complex_command_1(%c) called\n", c);
-}
-
-void complex_command_2(char c, long double f, bool b) {
-    printf("complex_command_2(%c, %Lf, %s) called\n", c, f, b ? "true" : "false");
-}
-
-void simple_command(void) {
+void simple_command(void* userdata) {
+    (void)userdata;
     printf("Hello, world.\n");
 }
 
-void add_command(float a, float b) {
+void add_command(float a, float b, void* userdata) {
+    (void)userdata;
     printf("%f + %f = %f\n", a, b, a + b);
 }
 
-void overloaded_ull(unsigned long long value) {
+void overloaded_ull(unsigned long long value, void* userdata) {
+    (void)userdata;
     printf("%llu is an unsigned integer\n", value);
 }
 
-void overloaded_ll(long long value) {
+void overloaded_ll(long long value, void* userdata) {
+    (void)userdata;
     printf("%lli is an integer\n", value);
 }
 
-void overloaded_ld(long double value) {
+void overloaded_ld(long double value, void* userdata) {
+    (void)userdata;
     printf("%Lf is a decimal\n", value);
 }
 
-void overloaded_b(bool value) {
+void overloaded_b(bool value, void* userdata) {
+    (void)userdata;
     printf("%s is a bool\n", value ? "true" : "false");
 }
 
-void overloaded_s(const char* value) {
+void overloaded_s(const char* value, void* userdata) {
+    (void)userdata;
     printf("%s is a string\n", value);
 }
 
-void with_optional(const char* first) {
+void with_optional(const char* first, void* userdata) {
+    (void)userdata;
     printf("%s\n", first);
 }
 
-void with_optional2(const char* first, float second) {
+void with_optional2(const char* first, float second, void* userdata) {
+    (void)userdata;
     printf("%s and %f\n", first, second);
 }
 
