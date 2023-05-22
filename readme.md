@@ -52,18 +52,20 @@ void hello(void* userdata) {
 
 The COMMANDS macro contains all information about commands that is passed to the code generation inside `macrocli/implementation.inc`.
 
-It must be declared as a sequence of `COMMAND(name, summary, args)` declarations where:
+It must be declared as a (space-separated) sequence of `COMMAND(name, summary, args)` declarations where:
 - `name` is an identifier, used for the command name;
 - `summary` is a string literal, used by the help command when listing *all* commands; and
 - `args` is a **command variant declaration sequence**, described below.
 
-A command variant declaration sequence is a list of declarations in the form `ARGS_n(function, summary, types...)` where:
+A command variant declaration sequence is a (space-separated) list of declarations in the form `ARGS_n(function, summary, types...)` where:
 - `n` is an integer between 0 and 3 (eg. `ARGS_0`, `ARGS_3`, etc.);
 - `function` is the command variant's assocaited function;
 - `summary` is a string literal, used by the help command when asked about the command specifically; and
-- `types...` is a comma-separated sequence of C types.
+- `types...` are additional arguments of the variant's argument types (of length `n`).
 
 See `example/commands.c` for an example.
+
+Currently, only 3 arguments are supported at maximum (ie. `ARGS_3(...)`). This is only a limitation of implementation, and can be increased arbitratily if needed.
 
 ## Usage
 
@@ -122,3 +124,36 @@ void function(void) {
 ```
 
 Since `macrocli_run` parses in-place and destroys the original string, the input buffer should be considered uninitialized after a call to `macrocli_run`.
+
+## Not implemented
+
+### Variadic arguments
+
+Commands which take any number of inputs are not curently supported. Eg. functions like:
+```c
+void command(int value, const char* const* extra, unsigned extra_count) {
+    printf("value = %i\n", value);
+    printf("extra_count = %u\n", extra_count);
+    for (unsigned i = 0; i < extra_count; i++) {
+        printf("extra[%u] = %s\n", i, extra[i]);
+    }
+}
+```
+
+With a command invocation:
+```
+> command 123 any number of string arguments may follow
+value = 123
+extra_count = 7
+extra[0] = any
+extra[1] = number
+extra[2] = of
+extra[3] = string
+extra[4] = arguments
+extra[5] = may
+extra[6] = follow
+```
+
+### Test suite
+
+Previous versions of this library has proper testing, its very important to re-add comprehensive tests to this library.
