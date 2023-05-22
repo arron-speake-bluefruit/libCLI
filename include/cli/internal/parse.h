@@ -17,8 +17,25 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+typedef enum ParseStatus {
+    // The entire string was parsed successfully.
+    parse_status_success,
+
+    // Expected a character after '/', but the string ended.
+    parse_status_eof_after_slash,
+
+    // The string ended before a closing `"`.
+    parse_status_unterminated_double_quote,
+
+    // The string ended before a closing `'`.
+    parse_status_unterminated_single_quote,
+} ParseStatus;
+
 typedef struct ParseResult {
-    bool success;
+    // Status of the parse (parse_status_success if it succeeded).
+    ParseStatus status;
+
+    // If successful, the number of arguments collected by the parser.
     size_t argument_count;
 } ParseResult;
 

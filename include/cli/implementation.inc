@@ -100,7 +100,7 @@ void libcli_run(char* input, void* userdata) {
     ParseResult result = libcli_parse(input, args, capacity);
     size_t count = result.argument_count;
 
-    if (!result.success || (count == 0)) {
+    if ((result.status != parse_status_success) || (count == 0)) {
         return;
     }
 

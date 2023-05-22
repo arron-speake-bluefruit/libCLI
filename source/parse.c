@@ -35,26 +35,26 @@ static void parser_write(Parser* parser, char c) {
     parser->write += 1;
 }
 
-static bool parse_argument(Parser* parser);
+static ParseStatus parse_argument(Parser* parser);
 
 // parsing an argument, last char was a '\'
-static bool parse_slash(Parser* parser) {
+static ParseStatus parse_slash(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
-        return false;
+        return parse_status_eof_after_slash;
     } else {
         parser_write(parser, c);
         return parse_argument(parser);
     }
 }
 
-static bool parse_single_quote(Parser* parser);
+static ParseStatus parse_single_quote(Parser* parser);
 
 // parsing an argument, last char was a '\' inside of single quotes
-static bool parse_single_quote_slash(Parser* parser) {
+static ParseStatus parse_single_quote_slash(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
-        return false;
+        return parse_status_eof_after_slash;
     } else {
         parser_write(parser, c);
         return parse_single_quote(parser);
@@ -62,10 +62,10 @@ static bool parse_single_quote_slash(Parser* parser) {
 }
 
 // parsing an argument, inside of single-quotes
-static bool parse_single_quote(Parser* parser) {
+static ParseStatus parse_single_quote(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
-        return false;
+        return parse_status_unterminated_single_quote;
     } else if (c == '\'') {
         return parse_argument(parser);
     } else if (c == '\\') {
@@ -76,13 +76,13 @@ static bool parse_single_quote(Parser* parser) {
     }
 }
 
-static bool parse_double_quote(Parser* parser);
+static ParseStatus parse_double_quote(Parser* parser);
 
 // parsing an argument, last char was a '\' inside of double quotes
-static bool parse_double_quote_slash(Parser* parser) {
+static ParseStatus parse_double_quote_slash(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
-        return false;
+        return parse_status_eof_after_slash;
     } else {
         parser_write(parser, c);
         return parse_double_quote(parser);
@@ -90,10 +90,10 @@ static bool parse_double_quote_slash(Parser* parser) {
 }
 
 // parsing an argument, inside of double-quotes
-static bool parse_double_quote(Parser* parser) {
+static ParseStatus parse_double_quote(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
-        return false;
+        return parse_status_unterminated_double_quote;
     } else if (c == '\"') {
         return parse_argument(parser);
     } else if (c == '\\') {
@@ -104,14 +104,14 @@ static bool parse_double_quote(Parser* parser) {
     }
 }
 
-static bool parse_space(Parser* parser);
+static ParseStatus parse_space(Parser* parser);
 
 // parsing an argument, no special characters in effect
-static bool parse_argument(Parser* parser) {
+static ParseStatus parse_argument(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
         parser_write(parser, '\0');
-        return true;
+        return parse_status_success;
     } else if (isspace(c)) {
         parser_write(parser, '\0');
         return parse_space(parser);
@@ -128,10 +128,10 @@ static bool parse_argument(Parser* parser) {
 }
 
 // parsing whitespace inbetween arguments
-static bool parse_space(Parser* parser) {
+static ParseStatus parse_space(Parser* parser) {
     char c = parser_read(parser);
     if (c == '\0') {
-        return true;
+        return parse_status_success;
     } else if (isspace(c)) {
         return parse_space(parser);
     } else if (c == '\\') {
@@ -159,10 +159,10 @@ ParseResult libcli_parse(char* input, const char** arguments, size_t max_argumen
         .max_arguments = max_arguments,
     };
 
-    bool success = parse_space(&parser);
+    ParseStatus status = parse_space(&parser);
 
     return (ParseResult) {
-        .success = success,
+        .status = status,
         .argument_count = parser.argument_count,
     };
 }
