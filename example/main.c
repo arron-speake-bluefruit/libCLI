@@ -5,6 +5,7 @@ static bool is_newline(char c) {
     return (c == '\n') || (c == '\r');
 }
 
+// read the stdin into `buffer` until a newline is reached (or `size` bytes are read).
 static void read_line(char* buffer, size_t size) {
     size_t index = 0;
 

@@ -157,3 +157,7 @@ extra[6] = follow
 ### Test suite
 
 Previous versions of this library has proper testing, its very important to re-add comprehensive tests to this library.
+
+### Parsing for arguments with unsigned integral types
+
+Currently, unsigned types are not parsed correctly.
