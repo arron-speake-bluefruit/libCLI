@@ -40,9 +40,9 @@
         } \
     } \
 
-#define COMMAND(name, summary, ...) \
+#define COMMAND(name, summary, variants) \
     if (strcmp(#name, args[0]) == 0) { \
-        __VA_ARGS__ \
+        variants \
         goto name##_bad_args; \
     } \
 

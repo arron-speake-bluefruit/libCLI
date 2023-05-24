@@ -13,11 +13,11 @@
 #define ARGS_3(function, summary, arg0, arg1, arg2) \
     print(userdata, "    %s <%s> <%s> <%s> - %s\n", name_string, arg_type_name((arg0)0), arg_type_name((arg1)0), arg_type_name((arg2)0), summary); \
 
-#define COMMAND(name, summary, ...) \
+#define COMMAND(name, summary, variants) \
     if (strcmp(#name, args[1]) == 0) { \
         const char* name_string = #name; \
         print(userdata, "list of forms of this command:\n"); \
-        __VA_ARGS__ \
+        variants \
         return true; \
      } \
 

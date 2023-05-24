@@ -15,11 +15,11 @@
 #define ARGS_3(function, summary, arg0, arg1, arg2) \
     print(userdata, "    %s <%s> <%s> <%s>\n", name_string, arg_type_name((arg0)0), arg_type_name((arg1)0), arg_type_name((arg2)0)); \
 
-#define COMMAND(name, summary, ...) \
+#define COMMAND(name, summary, variants) \
     name##_bad_args: { \
         const char* name_string = #name; \
         print(userdata, "error: bad arguments for `" #name "`. accepted forms are:\n"); \
-        __VA_ARGS__ \
+        variants \
         return false; \
     } \
 
