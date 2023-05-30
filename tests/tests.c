@@ -14,28 +14,28 @@ static void* second_command_last_userdata = NULL;
 static void* third_command_last_userdata = NULL;
 static void* fourth_command_last_userdata = NULL;
 
-static void first_command(size_t argc, const char* const* argv, void* userdata) {
+static void first_command(size_t argc, const CliArgument* argv, void* userdata) {
     (void)argc;
     (void)argv;
     first_command_call_count += 1;
     first_command_last_userdata = userdata;
 }
 
-static void second_command(size_t argc, const char* const* argv, void* userdata) {
+static void second_command(size_t argc, const CliArgument* argv, void* userdata) {
     (void)argc;
     (void)argv;
     second_command_call_count += 1;
     second_command_last_userdata = userdata;
 }
 
-static void third_command(size_t argc, const char* const* argv, void* userdata) {
+static void third_command(size_t argc, const CliArgument* argv, void* userdata) {
     (void)argc;
     (void)argv;
     third_command_call_count += 1;
     third_command_last_userdata = userdata;
 }
 
-static void fourth_command(size_t argc, const char* const* argv, void* userdata) {
+static void fourth_command(size_t argc, const CliArgument* argv, void* userdata) {
     (void)argc;
     (void)argv;
     fourth_command_call_count += 1;
@@ -232,14 +232,14 @@ static void writeback_data_is_passed_to_writeback(void) {
 
 enum { test_max_argc = 16 };
 static size_t command_last_argc;
-static const char* command_last_argv[test_max_argc];
+static CliArgument command_last_argv[test_max_argc];
 
-static void command_remember_args(size_t argc, const char* const* argv, void* userdata) {
+static void command_remember_args(size_t argc, const CliArgument* argv, void* userdata) {
     (void)userdata;
 
     command_last_argc = argc;
     assert(argc < test_max_argc);
-    memcpy(command_last_argv, argv, sizeof(const char*) * argc);
+    memcpy(command_last_argv, argv, sizeof(CliArgument) * argc);
 }
 
 static void can_parse_space_separated_arguments(void) {
@@ -258,10 +258,14 @@ static void can_parse_space_separated_arguments(void) {
 
     // Then
     assert(command_last_argc == 4);
-    assert(strcmp(command_last_argv[0], "a") == 0);
-    assert(strcmp(command_last_argv[1], "bc") == 0);
-    assert(strcmp(command_last_argv[2], "defg") == 0);
-    assert(strcmp(command_last_argv[3], "hijklmnop") == 0);
+    assert(command_last_argv[0].type == cli_argument_type_string);
+    assert(strcmp(command_last_argv[0].string, "a") == 0);
+    assert(command_last_argv[1].type == cli_argument_type_string);
+    assert(strcmp(command_last_argv[1].string, "bc") == 0);
+    assert(command_last_argv[2].type == cli_argument_type_string);
+    assert(strcmp(command_last_argv[2].string, "defg") == 0);
+    assert(command_last_argv[3].type == cli_argument_type_string);
+    assert(strcmp(command_last_argv[3].string, "hijklmnop") == 0);
 }
 
 // Test runner

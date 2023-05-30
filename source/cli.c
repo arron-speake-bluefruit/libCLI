@@ -14,7 +14,7 @@ typedef struct {
     size_t index;
 } SearchResult;
 
-static void dummy_help_command(size_t argc, const char* const* argv, void* userdata) {
+static void dummy_help_command(size_t argc, const CliArgument* argv, void* userdata) {
     (void)argc;
     (void)argv;
     (void)userdata;
@@ -175,7 +175,7 @@ static CliRunResult run_command(
     const CliHeader* header,
     CliCommand command,
     size_t argc,
-    const char* const* argv,
+    const CliArgument* argv,
     void* userdata
 ) {
     if (command.function == dummy_help_command) {
@@ -191,7 +191,7 @@ static CliRunResult run_arguments(
     const CliHeader* header,
     const char* command_name,
     size_t argc,
-    const char* const* argv,
+    const CliArgument* argv,
     void* userdata
 ) {
     SearchResult result = find_command_by_name(header, command_name);
@@ -206,13 +206,20 @@ static CliRunResult run_arguments(
 }
 
 CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata) {
-    const char* arguments[input_parser_argument_capacity];
-    size_t argument_count = parse_input(input, arguments);
+    const char* argument_strings[input_parser_argument_capacity];
+    size_t argument_count = parse_input(input, argument_strings);
 
     if (argument_count > 0) {
-        const char* command_name = arguments[0];
+        const char* command_name = argument_strings[0];
+        CliArgument argv[input_parser_argument_capacity - 1];
         size_t argc = argument_count - 1;
-        const char* const* argv = &arguments[1];
+
+        for (size_t i = 0; i < (argument_count - 1); i++) {
+            argv[i] = (CliArgument){
+                .type = cli_argument_type_string,
+                .string = argument_strings[i + 1],
+            };
+        }
 
         return run_arguments(header, command_name, argc, argv, userdata);
     } else {

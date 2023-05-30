@@ -4,8 +4,19 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+typedef enum CliArgumentType {
+    cli_argument_type_string,
+} CliArgumentType;
+
+typedef struct CliArgument {
+    CliArgumentType type;
+    union {
+        const char* string;
+    };
+} CliArgument;
+
 // A function belonging to a command.
-typedef void (*CliCommandFunction)(size_t, const char* const*, void*);
+typedef void (*CliCommandFunction)(size_t, const CliArgument*, void*);
 
 // Type of a function called when the CLI needs to write a string back to the user.
 typedef void (*CliWritebackFunction)(const char*, void*);
