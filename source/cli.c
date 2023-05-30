@@ -125,7 +125,7 @@ CliHeader libcli_new(const CliNewInfo* info) {
         .writeback_data = info->writeback_data,
     };
 
-    libcli_add(&header, "help", "displays information about commands", dummy_help_command);
+    libcli_add(&header, "help", "displays information about commands", 0, NULL, dummy_help_command);
 
     return header;
 }
@@ -134,8 +134,13 @@ bool libcli_add(
     CliHeader* header,
     const char* name,
     const char* summary,
+    size_t argument_count,
+    const CliArgumentType* arguments,
     CliCommandFunction function
 ) {
+    (void)argument_count;
+    (void)arguments;
+
     if (header->count < header->capacity) {
         return add_command(header, name, summary, function);
     } else {

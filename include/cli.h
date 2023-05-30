@@ -73,6 +73,8 @@ bool libcli_add(
     CliHeader* header,
     const char* name,
     const char* summary,
+    size_t argument_count,
+    const CliArgumentType* arguments,
     CliCommandFunction function
 );
 
