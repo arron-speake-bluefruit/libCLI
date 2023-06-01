@@ -21,5 +21,10 @@ if(${UNIT_TESTS})
 	target_link_libraries(tests PRIVATE ${PROJECT_NAME})
 	target_compile_options(tests PRIVATE ${ADDITIONAL_CFLAGS})
 
+	add_executable(parse_tests "tests/parse_tests.c" "source/parse.c")
+	target_include_directories(parse_tests PRIVATE "${PROJECT_SOURCE_DIR}/include")
+	target_compile_options(parse_tests PRIVATE ${ADDITIONAL_CFLAGS})
+
 	add_test(NAME tests COMMAND tests)
+	add_test(NAME parse_tests COMMAND parse_tests)
 endif()
