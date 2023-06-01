@@ -5,6 +5,7 @@ option(UNIT_TESTS "Enable the compilation of unit tests" Off)
 
 set(SOURCES
 	"source/cli.c"
+	"source/parse.c"
 )
 
 set(ADDITIONAL_CFLAGS "-Wall" "-Wextra" "-Wpedantic")
