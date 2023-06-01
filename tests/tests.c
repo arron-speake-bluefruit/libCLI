@@ -242,7 +242,7 @@ static void command_remember_args(size_t argc, const CliArgument* argv, void* us
     memcpy(command_last_argv, argv, sizeof(CliArgument) * argc);
 }
 
-static void can_parse_space_separated_arguments(void) {
+static void can_parse_complex_arguments(void) {
     // Given
     enum { capacity = 2 };
     CliCommand commands[capacity];
@@ -253,19 +253,17 @@ static void can_parse_space_separated_arguments(void) {
     libcli_add(&header, "example", "", 0, NULL, command_remember_args);
 
     // When
-    char input[] = "     example a bc defg hijklmnop      ";
+    char input[] = "     \"example\" 'a' \"bc defg\" hijklmnop      ";
     libcli_run(&header, input, NULL);
 
     // Then
-    assert(command_last_argc == 4);
+    assert(command_last_argc == 3);
     assert(command_last_argv[0].type == cli_argument_type_string);
     assert(strcmp(command_last_argv[0].string, "a") == 0);
     assert(command_last_argv[1].type == cli_argument_type_string);
-    assert(strcmp(command_last_argv[1].string, "bc") == 0);
+    assert(strcmp(command_last_argv[1].string, "bc defg") == 0);
     assert(command_last_argv[2].type == cli_argument_type_string);
-    assert(strcmp(command_last_argv[2].string, "defg") == 0);
-    assert(command_last_argv[3].type == cli_argument_type_string);
-    assert(strcmp(command_last_argv[3].string, "hijklmnop") == 0);
+    assert(strcmp(command_last_argv[2].string, "hijklmnop") == 0);
 }
 
 // Test runner
@@ -293,7 +291,7 @@ int main(void) {
         cant_exceed_capacity,
         automatic_help_command,
         writeback_data_is_passed_to_writeback,
-        can_parse_space_separated_arguments,
+        can_parse_complex_arguments,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);

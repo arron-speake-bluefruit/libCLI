@@ -1,4 +1,5 @@
 #include "cli.h"
+#include "internal/parse.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -148,34 +149,6 @@ bool libcli_add(
     }
 }
 
-static size_t parse_input(char* input, const char** arguments) {
-    const size_t input_length = strlen(input);
-
-    size_t argument_count = 0;
-    bool is_in_argument = false;
-
-    for (size_t i = 0; i < input_length; i++) {
-        char c = input[i];
-        bool is_space = isspace(c);
-        bool can_fit_more_args = (argument_count < input_parser_argument_capacity);
-
-        if (is_space && is_in_argument && can_fit_more_args) {
-            // end of an argument
-            input[i] = '\0';
-            is_in_argument = false;
-        } else if (!is_space && !is_in_argument) {
-            // starting new argument
-            arguments[argument_count] = &input[i];
-            argument_count += 1;
-            is_in_argument = true;
-        } else {
-            // nothing to do
-        }
-    }
-
-    return argument_count;
-}
-
 static CliRunResult run_command(
     const CliHeader* header,
     CliCommand command,
@@ -212,7 +185,20 @@ static CliRunResult run_arguments(
 
 CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata) {
     const char* argument_strings[input_parser_argument_capacity];
-    size_t argument_count = parse_input(input, argument_strings);
+    ParseResult result = libcli_parse(input, argument_strings, input_parser_argument_capacity);
+
+    switch (result.status) {
+        case parse_status_success:
+            break;
+        case parse_status_eof_after_slash:
+            return cli_run_result_eof_after_slash;
+        case parse_status_unterminated_double_quote:
+            return cli_run_result_unterminated_double_quote;
+        case parse_status_unterminated_single_quote:
+            return cli_run_result_unterminated_single_quote;
+    }
+
+    size_t argument_count = result.argument_count;
 
     if (argument_count > 0) {
         const char* command_name = argument_strings[0];

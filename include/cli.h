@@ -44,6 +44,15 @@ typedef enum CliRunResult {
     // The input was parsed and a command was executed
     cli_run_result_ok,
 
+    // Unexpected end of input after '\'
+    cli_run_result_eof_after_slash,
+
+    // Unexpected end of input inside double-quotes
+    cli_run_result_unterminated_double_quote,
+
+    // Unexpected end of input inside single-quotes
+    cli_run_result_unterminated_single_quote,
+
     // The command name given in the input did not correspond to an existing command
     cli_run_result_unknown,
 } CliRunResult;
@@ -60,7 +69,7 @@ typedef struct CliNewInfo {
     // The function used to write strings back to the user.
     CliWritebackFunction writeback;
 
-    // Additional data passed to `writeback` calls. 
+    // Additional data passed to `writeback` calls.
     void* writeback_data;
 } CliNewInfo;
 
