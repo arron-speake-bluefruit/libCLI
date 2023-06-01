@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(CLI VERSION 0.1.0 LANGUAGES C)
 
 option(UNIT_TESTS "Enable the compilation of unit tests" Off)
+option(EXAMPLE "Enable the compilation of the example program" Off)
 
 set(SOURCES
 	"source/cli.c"
@@ -28,3 +29,9 @@ if(${UNIT_TESTS})
 	add_test(NAME tests COMMAND tests)
 	add_test(NAME parse_tests COMMAND parse_tests)
 endif()
+
+if (${EXAMPLE})
+	add_executable(example "example/main.c")
+	target_link_libraries(example PRIVATE ${PROJECT_NAME})
+	target_compile_options(example PRIVATE ${ADDITIONAL_CFLAGS})
+endif ()
