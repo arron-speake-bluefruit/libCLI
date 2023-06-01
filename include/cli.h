@@ -4,14 +4,20 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+enum {
+    cli_max_argument_count = 4,
+};
+
 typedef enum CliArgumentType {
     cli_argument_type_string,
+    cli_argument_type_int,
 } CliArgumentType;
 
 typedef struct CliArgument {
     CliArgumentType type;
     union {
         const char* string;
+        int integer;
     };
 } CliArgument;
 
@@ -26,6 +32,8 @@ typedef struct CliCommand {
     const char* name;
     const char* summary;
     CliCommandFunction function;
+    size_t argument_count;
+    CliArgumentType arguments[cli_max_argument_count];
 } CliCommand;
 
 // Contains all information used by the CLI. All fields are private and must not be modified
@@ -43,6 +51,9 @@ typedef struct CliHeader {
 typedef enum CliRunResult {
     // The input was parsed and a command was executed
     cli_run_result_ok,
+
+    // The incorrect number of arguments were provided
+    cli_run_result_bad_argc,
 
     // Unexpected end of input after '\'
     cli_run_result_eof_after_slash,

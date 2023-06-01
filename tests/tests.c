@@ -42,6 +42,30 @@ static void fourth_command(size_t argc, const CliArgument* argv, void* userdata)
     fourth_command_last_userdata = userdata;
 }
 
+static int integer_command_last_value = 0;
+static size_t integer_command_call_count = 0;
+
+static void integer_command(size_t argc, const CliArgument* argv, void* userdata) {
+    (void)userdata;
+
+    assert(argc == 1);
+    assert(argv[0].type == cli_argument_type_int);
+
+    int value = argv[0].integer;
+    integer_command_last_value = value;
+    integer_command_call_count += 1;
+}
+
+static size_t four_string_command_last_argc = {0};
+static CliArgument four_string_command_last_argv[8] = {0};
+static void four_string_command(size_t argc, const CliArgument* argv, void* userdata) {
+    (void)userdata;
+
+    assert(argc < 8);
+    four_string_command_last_argc = argc;
+    memcpy(four_string_command_last_argv, argv, sizeof(CliArgument) * argc);
+}
+
 static size_t writeback_size = 0;
 static char writeback_buffer[512] = {0};
 
@@ -230,18 +254,6 @@ static void writeback_data_is_passed_to_writeback(void) {
     assert(writeback_userdata_pointer == &userdata);
 }
 
-enum { test_max_argc = 16 };
-static size_t command_last_argc;
-static CliArgument command_last_argv[test_max_argc];
-
-static void command_remember_args(size_t argc, const CliArgument* argv, void* userdata) {
-    (void)userdata;
-
-    command_last_argc = argc;
-    assert(argc < test_max_argc);
-    memcpy(command_last_argv, argv, sizeof(CliArgument) * argc);
-}
-
 static void can_parse_complex_arguments(void) {
     // Given
     enum { capacity = 2 };
@@ -250,20 +262,47 @@ static void can_parse_complex_arguments(void) {
     CliHeader header = libcli_new(&info);
 
     // And
-    libcli_add(&header, "example", "", 0, NULL, command_remember_args);
+    CliArgumentType args[4] = {
+        cli_argument_type_string,
+        cli_argument_type_string,
+        cli_argument_type_string
+    };
+    libcli_add(&header, "example", "", 3, args, four_string_command);
 
     // When
     char input[] = "     \"example\" 'a' \"bc defg\" hijklmnop      ";
+    CliRunResult result = libcli_run(&header, input, NULL);
+
+    // Then
+    assert(result == cli_run_result_ok);
+
+    assert(four_string_command_last_argc == 3);
+    assert(four_string_command_last_argv[0].type == cli_argument_type_string);
+    assert(strcmp(four_string_command_last_argv[0].string, "a") == 0);
+    assert(four_string_command_last_argv[1].type == cli_argument_type_string);
+    assert(strcmp(four_string_command_last_argv[1].string, "bc defg") == 0);
+    assert(four_string_command_last_argv[2].type == cli_argument_type_string);
+    assert(strcmp(four_string_command_last_argv[2].string, "hijklmnop") == 0);
+}
+
+static void can_check_argument_types(void) {
+    // Given
+    enum { capacity = 2 };
+    CliCommand commands[capacity];
+    CliNewInfo info = { commands, capacity, printf_writeback, NULL };
+    CliHeader header = libcli_new(&info);
+
+    // And
+    CliArgumentType example_types[] = { cli_argument_type_int };
+    libcli_add(&header, "example", "", 1, example_types, integer_command);
+
+    // When
+    char input[] = "example 1234567";
     libcli_run(&header, input, NULL);
 
     // Then
-    assert(command_last_argc == 3);
-    assert(command_last_argv[0].type == cli_argument_type_string);
-    assert(strcmp(command_last_argv[0].string, "a") == 0);
-    assert(command_last_argv[1].type == cli_argument_type_string);
-    assert(strcmp(command_last_argv[1].string, "bc defg") == 0);
-    assert(command_last_argv[2].type == cli_argument_type_string);
-    assert(strcmp(command_last_argv[2].string, "hijklmnop") == 0);
+    assert(integer_command_call_count == 1);
+    assert(integer_command_last_value == 1234567);
 }
 
 // Test runner
@@ -279,7 +318,9 @@ static void cleanup(void) {
     fourth_command_last_userdata = NULL;
     writeback_userdata_pointer = NULL;
     clear_writeback_buffer();
-    command_last_argc = 0;
+    integer_command_last_value = 0;
+    integer_command_call_count = 0;
+    four_string_command_last_argc = 0;
 }
 
 int main(void) {
@@ -292,6 +333,7 @@ int main(void) {
         automatic_help_command,
         writeback_data_is_passed_to_writeback,
         can_parse_complex_arguments,
+        can_check_argument_types,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);

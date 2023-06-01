@@ -1,7 +1,8 @@
 #include "cli.h"
 #include "internal/parse.h"
 
-#include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -97,18 +98,25 @@ static bool add_command(
     CliHeader* header,
     const char* name,
     const char* summary,
+    size_t argument_count,
+    const CliArgumentType* arguments,
     CliCommandFunction function
 ) {
     SearchResult result = find_command_by_name(header, name);
 
     if (result.found) {
         return false;
+    } else if (argument_count > cli_max_argument_count) {
+        return false;
     } else {
         CliCommand command = {
             .name = name,
             .summary = summary,
             .function = function,
+            .argument_count = argument_count,
         };
+        memcpy(command.arguments, arguments, sizeof(CliArgumentType) * argument_count);
+
         insert_command(header, result.index, command);
 
         update_longest_name_length(header, name);
@@ -139,11 +147,8 @@ bool libcli_add(
     const CliArgumentType* arguments,
     CliCommandFunction function
 ) {
-    (void)argument_count;
-    (void)arguments;
-
     if (header->count < header->capacity) {
-        return add_command(header, name, summary, function);
+        return add_command(header, name, summary, argument_count, arguments, function);
     } else {
         return false;
     }
@@ -165,22 +170,30 @@ static CliRunResult run_command(
     }
 }
 
-static CliRunResult run_arguments(
-    const CliHeader* header,
-    const char* command_name,
-    size_t argc,
-    const CliArgument* argv,
-    void* userdata
-) {
-    SearchResult result = find_command_by_name(header, command_name);
+static bool parse_int(const char* string, int* out) {
+    char* end = NULL;
+    long value = strtol(string, &end, 0);
 
-    if (result.found) {
-        CliCommand command = header->commands[result.index];
-
-        return run_command(header, command, argc, argv, userdata);
+    if ((*end == '\0') && (value >= INT_MIN) && (value <= INT_MAX)) {
+        *out = (int)value;
+        return true;
     } else {
-        return cli_run_result_unknown;
+        return false;
     }
+}
+
+static bool parse_argument(CliArgumentType type, const char* input, CliArgument* output) {
+    output->type = type;
+
+    switch (type) {
+        case cli_argument_type_string:
+            output->string = input;
+            return true;
+        case cli_argument_type_int:
+            return parse_int(input, &output->integer);
+    }
+
+    return false;
 }
 
 CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata) {
@@ -202,17 +215,32 @@ CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata) {
 
     if (argument_count > 0) {
         const char* command_name = argument_strings[0];
-        CliArgument argv[input_parser_argument_capacity - 1];
-        size_t argc = argument_count - 1;
+        SearchResult search = find_command_by_name(header, command_name);
 
-        for (size_t i = 0; i < (argument_count - 1); i++) {
-            argv[i] = (CliArgument){
-                .type = cli_argument_type_string,
-                .string = argument_strings[i + 1],
-            };
+        if (search.found) {
+            CliCommand command = header->commands[search.index];
+
+            CliArgument argv[input_parser_argument_capacity - 1];
+            size_t argc = argument_count - 1;
+
+            if (argc != command.argument_count) {
+                return cli_run_result_bad_argc;
+            } else {
+                for (size_t i = 0; i < argc; i++) {
+                    CliArgumentType expected_type = command.arguments[i];
+
+                    bool success = parse_argument(expected_type, argument_strings[i + 1], &argv[i]);
+
+                    if (!success) {
+                        *(char*)0 = 0; // CRASH - UNIMPLEMENTED BRANCH
+                    }
+                }
+
+                return run_command(header, command, argc, argv, userdata);
+            }
+        } else {
+            return cli_run_result_unknown;
         }
-
-        return run_arguments(header, command_name, argc, argv, userdata);
     } else {
         return cli_run_result_ok;
     }
