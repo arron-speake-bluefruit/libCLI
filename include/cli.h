@@ -11,6 +11,7 @@ enum {
 typedef enum CliArgumentType {
     cli_argument_type_string,
     cli_argument_type_int,
+    cli_argument_type_float,
 } CliArgumentType;
 
 typedef struct CliArgument {
@@ -18,6 +19,7 @@ typedef struct CliArgument {
     union {
         const char* string;
         int integer;
+        float float_;
     };
 } CliArgument;
 

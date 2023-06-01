@@ -182,6 +182,12 @@ static bool parse_int(const char* string, int* out) {
     }
 }
 
+static bool parse_float(const char* string, float* out) {
+    char* end = NULL;
+    *out = strtof(string, &end);
+    return *end == '\0';
+}
+
 static bool parse_argument(CliArgumentType type, const char* input, CliArgument* output) {
     output->type = type;
 
@@ -191,6 +197,8 @@ static bool parse_argument(CliArgumentType type, const char* input, CliArgument*
             return true;
         case cli_argument_type_int:
             return parse_int(input, &output->integer);
+        case cli_argument_type_float:
+            return parse_float(input, &output->float_);
     }
 
     return false;

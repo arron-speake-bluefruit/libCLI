@@ -42,18 +42,20 @@ static void fourth_command(size_t argc, const CliArgument* argv, void* userdata)
     fourth_command_last_userdata = userdata;
 }
 
-static int integer_command_last_value = 0;
-static size_t integer_command_call_count = 0;
+static int integer_float_command_arg0 = 0;
+static float integer_float_command_arg1 = 0.0f;
+static size_t integer_float_command_call_count = 0;
 
-static void integer_command(size_t argc, const CliArgument* argv, void* userdata) {
+static void integer_float_command(size_t argc, const CliArgument* argv, void* userdata) {
     (void)userdata;
 
-    assert(argc == 1);
+    assert(argc == 2);
     assert(argv[0].type == cli_argument_type_int);
+    assert(argv[1].type == cli_argument_type_float);
 
-    int value = argv[0].integer;
-    integer_command_last_value = value;
-    integer_command_call_count += 1;
+    integer_float_command_arg0 = argv[0].integer;
+    integer_float_command_arg1 = argv[1].float_;
+    integer_float_command_call_count += 1;
 }
 
 static size_t four_string_command_last_argc = {0};
@@ -293,16 +295,17 @@ static void can_check_argument_types(void) {
     CliHeader header = libcli_new(&info);
 
     // And
-    CliArgumentType example_types[] = { cli_argument_type_int };
-    libcli_add(&header, "example", "", 1, example_types, integer_command);
+    CliArgumentType example_types[] = { cli_argument_type_int, cli_argument_type_float };
+    libcli_add(&header, "example", "", 2, example_types, integer_float_command);
 
     // When
-    char input[] = "example 1234567";
+    char input[] = "example 1234567 512.125";
     libcli_run(&header, input, NULL);
 
     // Then
-    assert(integer_command_call_count == 1);
-    assert(integer_command_last_value == 1234567);
+    assert(integer_float_command_call_count == 1);
+    assert(integer_float_command_arg0 == 1234567);
+    assert(integer_float_command_arg1 == 512.125f);
 }
 
 // Test runner
@@ -318,8 +321,9 @@ static void cleanup(void) {
     fourth_command_last_userdata = NULL;
     writeback_userdata_pointer = NULL;
     clear_writeback_buffer();
-    integer_command_last_value = 0;
-    integer_command_call_count = 0;
+    integer_float_command_arg0 = 0;
+    integer_float_command_arg1 = 0.0f;
+    integer_float_command_call_count = 0;
     four_string_command_last_argc = 0;
 }
 
