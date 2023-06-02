@@ -308,6 +308,32 @@ static void can_check_argument_types(void) {
     assert(integer_float_command_arg1 == 512.125f);
 }
 
+static void invalid_numerical_arguments(void) {
+    // Given
+    enum { capacity = 2 };
+    CliCommand commands[capacity];
+    CliNewInfo info = { commands, capacity, printf_writeback, NULL };
+    CliHeader header = libcli_new(&info);
+
+    // And
+    CliArgumentType example_types[] = { cli_argument_type_int, cli_argument_type_float };
+    libcli_add(&header, "example", "", 2, example_types, integer_float_command);
+
+    // When
+    char input[] = "example 1234BADNUMBEROHNO 0.1";
+    CliRunResult result = libcli_run(&header, input, NULL);
+
+    // Then
+    assert(result == cli_run_result_bad_argument);
+
+    // When
+    char input2[] = "example 123 0.1.2.3.";
+    CliRunResult result2 = libcli_run(&header, input2, NULL);
+
+    // Then
+    assert(result2 == cli_run_result_bad_argument);
+}
+
 // Test runner
 
 static void cleanup(void) {
@@ -338,6 +364,7 @@ int main(void) {
         writeback_data_is_passed_to_writeback,
         can_parse_complex_arguments,
         can_check_argument_types,
+        invalid_numerical_arguments,
     };
 
     const size_t test_count = sizeof(tests) / sizeof(Test);

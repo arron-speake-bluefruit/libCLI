@@ -68,6 +68,9 @@ typedef enum CliRunResult {
 
     // The command name given in the input did not correspond to an existing command
     cli_run_result_unknown,
+
+    // One or more arguments were invalid or not formatted correctly
+    cli_run_result_bad_argument,
 } CliRunResult;
 
 // Information required to create a new CLI. All field are public and must be written to before

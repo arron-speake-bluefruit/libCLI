@@ -154,6 +154,7 @@ bool libcli_add(
     }
 }
 
+// With validated arguments, run a given command
 static CliRunResult run_command(
     const CliHeader* header,
     CliCommand command,
@@ -204,52 +205,69 @@ static bool parse_argument(CliArgumentType type, const char* input, CliArgument*
     return false;
 }
 
+// Given a command, run it with given arguments
+static CliRunResult run_arguments(
+    const CliHeader* header,
+    CliCommand command,
+    size_t argc,
+    const char* const* strings,
+    void* userdata
+) {
+    if (argc != command.argument_count) {
+        return cli_run_result_bad_argc;
+    } else {
+        CliArgument argv[input_parser_argument_capacity - 1];
+
+        for (size_t i = 0; i < argc; i++) {
+            CliArgumentType expected_type = command.arguments[i];
+
+            bool success = parse_argument(expected_type, strings[i], &argv[i]);
+
+            if (!success) {
+                return cli_run_result_bad_argument;
+            }
+        }
+
+        return run_command(header, command, argc, argv, userdata);
+    }
+}
+
+// Execute a command based on tokenized arguments
+static CliRunResult run_parsed_input(
+    const CliHeader* header,
+    const char* const* strings,
+    size_t string_count,
+    void* userdata
+) {
+    if (string_count == 0) {
+        return cli_run_result_ok;
+    } else {
+        const char* command_name = strings[0];
+        SearchResult search = find_command_by_name(header, command_name);
+
+        if (!search.found) {
+            return cli_run_result_unknown;
+        } else {
+            CliCommand command = header->commands[search.index];
+            return run_arguments(header, command, string_count - 1, &strings[1], userdata);
+        }
+    }
+}
+
 CliRunResult libcli_run(const CliHeader* header, char* input, void* userdata) {
     const char* argument_strings[input_parser_argument_capacity];
     ParseResult result = libcli_parse(input, argument_strings, input_parser_argument_capacity);
 
     switch (result.status) {
-        case parse_status_success:
-            break;
         case parse_status_eof_after_slash:
             return cli_run_result_eof_after_slash;
         case parse_status_unterminated_double_quote:
             return cli_run_result_unterminated_double_quote;
         case parse_status_unterminated_single_quote:
             return cli_run_result_unterminated_single_quote;
-    }
-
-    size_t argument_count = result.argument_count;
-
-    if (argument_count > 0) {
-        const char* command_name = argument_strings[0];
-        SearchResult search = find_command_by_name(header, command_name);
-
-        if (search.found) {
-            CliCommand command = header->commands[search.index];
-
-            CliArgument argv[input_parser_argument_capacity - 1];
-            size_t argc = argument_count - 1;
-
-            if (argc != command.argument_count) {
-                return cli_run_result_bad_argc;
-            } else {
-                for (size_t i = 0; i < argc; i++) {
-                    CliArgumentType expected_type = command.arguments[i];
-
-                    bool success = parse_argument(expected_type, argument_strings[i + 1], &argv[i]);
-
-                    if (!success) {
-                        *(char*)0 = 0; // CRASH - UNIMPLEMENTED BRANCH
-                    }
-                }
-
-                return run_command(header, command, argc, argv, userdata);
-            }
-        } else {
+        case parse_status_success:
+            return run_parsed_input(header, argument_strings, result.argument_count, userdata);
+        default:
             return cli_run_result_unknown;
-        }
-    } else {
-        return cli_run_result_ok;
     }
 }
