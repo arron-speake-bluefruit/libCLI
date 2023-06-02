@@ -29,3 +29,14 @@ Support for `0..inf` optional arguments after all required arguments
 # No per-command argument count cap
 
 Switch to in-memory database model
+
+# Missing tests
+
+A few tests are missing for:
+- Adding command with conflicting name (eg. add "hello" command, then adding "hello" command again)
+- Adding too many arguments to a command (ie. argument_count > cli_max_argument_count)
+- Incorrect argument count (ie. argc < command.argument_count, argc > command.argument_count)
+- Nothing happens on empty input
+- Errors from libcli_parse are passed back out from libcli_run
+- Quotes starting inside arguments (eg. `h"ello"`, `h'i'`)
+- EOF after backslash inside quotes (eg. `'\` or `"\`)
